@@ -198,7 +198,9 @@ class DataStream
   end
 
   def import_rows(rows)
+    db.run "IF EXISTS(SELECT * FROM sys.columns WHERE is_identity=1 AND name='ID' AND object_name(object_id)='#{table_name}') SET IDENTITY_INSERT #{table_name} ON; SET ANSI_WARNINGS OFF;" if db.database_type == :mssql
     table.import(rows[:header], rows[:data])
+    db.run "IF EXISTS(SELECT * FROM sys.columns WHERE is_identity=1 AND name='ID' AND object_name(object_id)='#{table_name}') SET IDENTITY_INSERT #{table_name} OFF; SET ANSI_WARNINGS ON;" if db.database_type == :mssql
     state[:offset] += rows[:data].size
   end
 
