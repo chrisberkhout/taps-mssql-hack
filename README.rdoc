@@ -9,6 +9,8 @@ On the server side, you can use the regular taps gem, but you probably need to:
 * Change all DATE columns to be DATETIME (MSSQL doesn't get DATEs)
 * Drop views (not 100% sure, but it was good for my situation)
 
+Like this:
+
   $ mysqladmin -u deploy -pSecret create mydb_backup
   $ mysqldump -u deploy -pSecret mydb | mysql -u deploy -pSecret mydb_backup
   $ echo "DROP VIEW IF EXISTS vw_report;" | mysql -u deploy -pSecret mydb_backup
@@ -23,14 +25,12 @@ Do the pull with something like this (obviously you'll need all your ODBC stuff 
 
   $ taps pull odbc://dbusername:dbpassword@ignoredhostname/DSNforYourDatabase?db_type=mssql http://httpuser:httppassword@yourserver.com:5000
 
-After you have done the pull, you may need to:
-
-* Rename all the columns and tables to lowercase (so your active record attribs work as usual and so rails can see the schema_migrations table).
+After you have done the pull, you may need to rename all the columns and tables to lowercase (so your active record attribs work as usual and so rails can see the schema_migrations table).
 
   $ echo -e "SELECT 'EXEC sp_rename ''' + TABLE_SCHEMA + '.' + TABLE_NAME + '.' + COLUMN_NAME + ''', ''' + LOWER(COLUMN_NAME) + ''',''COLUMN''' FROM INFORMATION_SCHEMA.COLUMNS WHERE OBJECTPROPERTY(OBJECT_ID('[' + TABLE_SCHEMA + '].[' + TABLE_NAME + ']'),'isMSShipped') = 0;\nGO" | tsql -S MSSQLVMWARE -U username -P password -D myproj_development | (grep EXEC && echo "GO") | tsql -S MSSQLVMWARE -U username -P password -D myproj_development
   $ echo -e "SELECT 'EXEC sp_rename ''' + TABLE_SCHEMA + '.' + TABLE_NAME + ''', ''' + LOWER(TABLE_NAME) + '''' FROM INFORMATION_SCHEMA.COLUMNS WHERE OBJECTPROPERTY(OBJECT_ID('[' + TABLE_SCHEMA + '].[' + TABLE_NAME + ']'),'isMSShipped') = 0;\nGO" | tsql -S MSSQLVMWARE -U username -P password -D myproj_development | (grep EXEC && echo "GO") | tsql -S MSSQLVMWARE -U username -P password -D myproj_development
 
-* Convert any text columns to varchar(8000), truncating where necessary, (so that those columns are comparable by MSSQL):
+And convert any text columns to varchar(8000), truncating where necessary, (so that those columns are comparable by MSSQL):
 
   $ echo -e "SELECT 'SET ANSI_WARNINGS OFF; ALTER TABLE ' + TABLE_NAME + ' ALTER COLUMN ' + COLUMN_NAME + ' varchar(8000); SET ANSI_WARNINGS ON;' FROM information_schema.columns WHERE DATA_TYPE='text';\nGO" | tsql -S MSSQLVMWARE -U username -P password -D myproj_development | (grep ^SET && echo "GO") | tsql -S MSSQLVMWARE -U username -P password -D myproj_development
 
