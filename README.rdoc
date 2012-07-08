@@ -2,7 +2,13 @@
 
 This fork adds a couple of lines so that you can pull into an MSSQL Server DB.
 
-But of course, it's not that simple...
+== Status
+
+I haven't touched this since I created it. There's probably a better way to solve this problem now.
+
+== Details
+
+Even with this, it's not that simple...
 
 On the server side, you can use the regular taps gem, but you probably need to:
 
